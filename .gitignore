@@ -1,0 +1,11 @@
+docs/
+mchf-eclipse/.settings/org.eclipse.cdt.managedbuilder.core.prefs
+.metadata
+RemoteSystemsTempFiles
+*.txt
+*.gitattributes
+*.mak
+*.ncb
+*.opt
+*.plg
+*.dep
