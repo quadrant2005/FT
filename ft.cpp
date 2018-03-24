@@ -97,6 +97,8 @@ void printcat( char *msg, unsigned long count, unsigned char *bfr )
 }
 
 
+
+
 // fromhex: Converts a HEX string to an unsigned char - only works for max of 2 character strings.
 
 unsigned char fromhex( char *s )
@@ -1201,12 +1203,159 @@ if( WriteFile( hCom, sbuf, 5, &count, NULL ) == 0 )
 //[QBS]e
 //===========================================================================
 //[QBS]s
+int Dec2Hex(long int decs) 
+{
+	long int quotient,decimalNumber;
+	int i=1,j,temp;
+	char hexadecimalNumber[100];
+//	printf("decimal number=%ld",decs);
+	scanf("%ld",&decimalNumber);
+	quotient = decimalNumber;
+//	quotient = decs;
+	while(quotient!=0) {
+		temp = quotient % 16;
+		//To convert integer into character
+		if( temp < 10)
+		           temp =temp + 48; else
+		         temp = temp + 55;
+		hexadecimalNumber[i++]= temp;
+		quotient = quotient / 16;
+	}
+
+	for (j = i -1 ;j> 0;j--)
+	      printf(" Hex=%c\n",hexadecimalNumber[j]);
+//		  printf(" Hex=0x0%c\n",hexadecimalNumber[j]);
+		
+	return hexadecimalNumber[j];
+}
+//[QBS]e
+
+//[QBS]s
+unsigned char Read_EEPROM_ALL()	
+{
+// Read Frequency and Mode
+//1CEC
+	sbuf[0] = fromhex("00");
+	sbuf[1] = fromhex("04");//01 to FF
+	sbuf[2] = fromhex("00");//01 to FF			
+	sbuf[3] = fromhex("00");			
+	sbuf[4] = fromhex("BB");//Read EEPROM
+
+	printf( "\nRead_EEPROM_%02x%02x\n", sbuf[0], sbuf[1]);
+	printf( "SENDING CAT command: %02x %02x %02x %02x %02x to the Radio\n", sbuf[0], sbuf[1], sbuf[2], sbuf[3] ,sbuf[4]);
+
+if( WriteFile( hCom, sbuf, 5, &count, NULL ) == 0 )
+	{
+		printf ("WriteFile failed with error %d.\n", GetLastError());
+		return (1);
+	}
+
+	if( count != 5 )
+	{
+		printf( "Write to the radio failed! RC = %d\n", count );
+		return 0;
+	}
+
+
+		if( ReadFile( hCom, rbuf, 5, &count, NULL ) == 0 )
+	{
+		printf ("ReadFile failed with error %d.\n", GetLastError());
+		return (1);
+	}
+/*
+	if(rbuf[0] == 00 && rbuf[1] == 00)
+	{
+		printf( "Error: Radio did not accept command, should have returned received signal\n\n" );
+		printcat( "DEBUG Read = \n", count, rbuf );
+		printf( "S0");
+	}
+		else
+	{*/
+		printcat( "Read_Tx(1)Radio response to write command is ", count, rbuf );
+
+//		printf( "DEBUG rbuf[0]='%d' \n",rbuf[0]);
+
+		printf( "DEBUG rbuf='[3]%d',[2]'%d',[1]'%d',[0]'%d' ",rbuf[3],rbuf[2],rbuf[1],rbuf[0]);
+/*		
+		if( rbuf[0] == 0 )
+		{
+			printf( "S0");
+		}
+		else if( rbuf[0] == fromhex("FF"))
+		{
+			printf( "FF");
+		}
+		else
+		{
+			printf( "UNKNOWN ");
+		}
+
+	}*/
+//	fgets (wbuf, 31, stdin);//[QBS]
+	return (sbuf[6]);
+}
+//[QBS]e
+//===========================================================================
+//[QBS]s
+unsigned char Reset_EEPROM()	
+{
+// Read Frequency and Mode
+
+	sbuf[0] = fromhex("00");
+	sbuf[1] = fromhex("00");
+	sbuf[2] = fromhex("00");			
+	sbuf[3] = fromhex("00");			
+	sbuf[4] = fromhex("BE");//Rest eeprom content
+
+	printf( "\nRead_EEPROM_0X0079\n");
+	printf( "SENDING CAT command: %02x %02x %02x %02x %02x to the Radio\n", sbuf[0], sbuf[1], sbuf[2], sbuf[3] ,sbuf[4]);
+
+if( WriteFile( hCom, sbuf, 5, &count, NULL ) == 0 )
+	{
+		printf ("WriteFile failed with error %d.\n", GetLastError());
+		return (1);
+	}
+
+	if( count != 5 )
+	{
+		printf( "Write to the radio failed! RC = %d\n", count );
+		return 0;
+	}
+
+
+		if( ReadFile( hCom, rbuf, 5, &count, NULL ) == 0 )
+	{
+		printf ("ReadFile failed with error %d.\n", GetLastError());
+		return (1);
+	}
+
+	if(rbuf[0] == 00 && rbuf[1] == 00)
+	{
+		printf( "Error: Radio did not accept command, should have returned received signal\n\n" );
+		printcat( "DEBUG Read = \n", count, rbuf );
+		printf( "S0");
+	}
+		else
+	{
+		printcat( "Read_Tx(1)Radio response to write command is ", count, rbuf );
+
+//		printf( "DEBUG rbuf[0]='%d' \n",rbuf[0]);
+
+		printf( "DEBUG rbuf='[3]%d',[2]'%d',[1]'%d',[0]'%d' ",rbuf[3],rbuf[2],rbuf[1],rbuf[0]);
+		
+	}
+//	fgets (wbuf, 31, stdin);//[QBS]
+	return (sbuf[6]);
+}
+//[QBS]e
+//===========================================================================
+//[QBS]s
 unsigned char Write_Freq()	
 {
 //	unsigned char	sbuf[6];
-	sbuf[0] = fromhex("00");
-	sbuf[1] = fromhex("52");
-	sbuf[2] = fromhex("50");			
+	sbuf[0] = fromhex("00");//1.170mhz Signal One TEST;
+	sbuf[1] = fromhex("11");
+	sbuf[2] = fromhex("70");			
 	sbuf[3] = fromhex("00");			
 	sbuf[4] = fromhex("01");//Write
 
@@ -1373,43 +1522,48 @@ int main(int argc, char *argv[] )
 
 //===========================
 	printf( "\nReady\n" );
-	Read_Freq_and_Mode();//[QBS]
-	Read_Rx();//[QBS]
-
-
-Read_Rx();//[QBS]
-Read_Rx();//[QBS]
-Read_Rx();//[QBS]
-Read_Rx();//[QBS]
-Read_Rx();//[QBS]
-
-
-
-//	Read_Tx();//[QBS]
-//	Read_EEPROM_0X0055();//[QBS]
-//	Read_EEPROM_0X0057();//[QBS]
-//	Read_EEPROM_0X0059();//[QBS]
-//	Read_EEPROM_0X005F();//[QBS]
-//	Read_EEPROM_0X0065();//[QBS]
-//	Read_EEPROM_0X0079();//[QBS]
-//	Read_EEPROM_0X00B1();//[QBS]
-//	Read_EEPROM_0X00BB();//[QBS]
-//	Read_EEPROM_0X00BD();//[QBS]
-//	Read_EEPROM_0X0485();//[QBS]
-//	Read_EEPROM_0X0487();//[QBS]
-//	Read_EEPROM_0X048A();//[QBS]
-//	Read_Tx();//[QBS]
 //	Read_Freq_and_Mode();//[QBS]
-//	Read_Tx();//[QBS]
 //	Read_Rx();//[QBS]
+
+
+//Read_Rx();//[QBS]
+//Read_Rx();//[QBS]
+//Read_Rx();//[QBS]
+//Read_Rx();//[QBS]
+//Read_Rx();//[QBS]
+
+
+/*
+	Read_Tx();//[QBS]
+	Read_EEPROM_0X0055();//[QBS]
+	Read_EEPROM_0X0057();//[QBS]
+						 
+	Read_EEPROM_0X0059();//[QBS]
+	Read_EEPROM_0X005F();//[QBS]
+	Read_EEPROM_0X0065();//[QBS]
+	Read_EEPROM_0X0079();//[QBS]
+	Read_EEPROM_0X00B1();//[QBS]
+	Read_EEPROM_0X00BB();//[QBS]
+	Read_EEPROM_0X00BD();//[QBS]
+	Read_EEPROM_0X0485();//[QBS]
+	Read_EEPROM_0X0487();//[QBS]
+	Read_EEPROM_0X048A();//[QBS]
+	Read_Tx();//[QBS]
+	Read_Freq_and_Mode();//[QBS]
+	Read_Tx();//[QBS]
+	Read_Rx();//[QBS]
+	*/
 //===========================
-
-
+//	Read_EEPROM_ALL();//[QBS] Read and backup McHF eeprom
+//    Dec2Hex(10);
+	Reset_EEPROM();
 //	Write_Freq();//[QBS]
 //	Read_Freq_and_Mode();//[QBS]
 
 		fgets (wbuf, 31, stdin);//[QBS]
-//Read_Rx();//[QBS]
+
+	Read_Freq_and_Mode();//[QBS]
+    Read_Rx();//[QBS]
 
 	printf( "\nPRESS KEY TO EXIT\n\n" );
 	fgets (wbuf, 31, stdin);//[QBS]

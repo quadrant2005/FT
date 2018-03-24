@@ -9,3 +9,10 @@ RemoteSystemsTempFiles
 *.opt
 *.plg
 *.dep
+*.bsc
+*.obj
+*.pch
+*.sbr
+*.ilk
+*.pdb
+*.idb
