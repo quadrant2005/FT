@@ -1297,7 +1297,7 @@ if( WriteFile( hCom, sbuf, 5, &count, NULL ) == 0 )
 //[QBS]e
 //===========================================================================
 //[QBS]s
-unsigned char Reset_EEPROM()	
+unsigned char ERASE_EEPROM()	
 {
 // Read Frequency and Mode
 
@@ -1404,6 +1404,73 @@ printf( "Sending CAT command: %02x %02x %02x %02x %02x to the Radio\n", sbuf[0],
 }
 //[QBS]e
 
+
+//===========================================================================
+unsigned char Write_EEPROM()	
+{
+// Read Frequency and Mode
+
+	sbuf[0] = fromhex("15");
+	sbuf[1] = fromhex("00");
+	sbuf[2] = fromhex("AA");			
+	sbuf[3] = fromhex("AA");		
+	sbuf[4] = fromhex("BC");//Write EEPROM
+
+	printf( "\nRead_EEPROM_0X0057\n");
+	printf( "SENDING CAT command: %02x %02x %02x %02x %02x to the Radio\n", sbuf[0], sbuf[1], sbuf[2], sbuf[3] ,sbuf[4]);
+
+if( WriteFile( hCom, sbuf, 5, &count, NULL ) == 0 )
+	{
+		printf ("WriteFile failed with error %d.\n", GetLastError());
+		return (1);
+	}
+
+	if( count != 5 )
+	{
+		printf( "Write to the radio failed! RC = %d\n", count );
+		return 0;
+	}
+
+
+		if( ReadFile( hCom, rbuf, 5, &count, NULL ) == 0 )
+	{
+		printf ("ReadFile failed with error %d.\n", GetLastError());
+		return (1);
+	}
+
+	if(rbuf[0] == 00 && rbuf[1] == 00)
+	{
+		printf( "Error: Radio did not accept command, should have returned received signal\n\n" );
+		printcat( "DEBUG Read = \n", count, rbuf );
+		printf( "S0");
+	}
+		else
+	{
+		printcat( "Read_Tx(1)Radio response to write command is ", count, rbuf );
+
+//		printf( "DEBUG rbuf[0]='%d' \n",rbuf[0]);
+
+		printf( "DEBUG rbuf='[3]%d',[2]'%d',[1]'%d',[0]'%d' ",rbuf[3],rbuf[2],rbuf[1],rbuf[0]);
+		
+		if( rbuf[0] == fromhex("A0 13") )
+		{
+			printf( "NB=on");
+		}
+		else if( rbuf[0] == fromhex("80 13"))
+		{
+			printf( "NB=off");
+		}
+		else
+		{
+			printf( "UNKNOWN");
+		}
+	}
+//	fgets (wbuf, 31, stdin);//[QBS]
+	return (sbuf[6]);
+}
+//[QBS]e
+
+//===========================================================================
 
 //===========================================================================
 	
@@ -1554,16 +1621,19 @@ int main(int argc, char *argv[] )
 	Read_Rx();//[QBS]
 	*/
 //===========================
+	ERASE_EEPROM();
+	Write_EEPROM();
+//	Read_EEPROM_0X0485();//[QBS]
 //	Read_EEPROM_ALL();//[QBS] Read and backup McHF eeprom
 //    Dec2Hex(10);
-	Reset_EEPROM();
+//	ERASE_EEPROM();
 //	Write_Freq();//[QBS]
 //	Read_Freq_and_Mode();//[QBS]
 
 		fgets (wbuf, 31, stdin);//[QBS]
 
-	Read_Freq_and_Mode();//[QBS]
-    Read_Rx();//[QBS]
+//	Read_Freq_and_Mode();//[QBS]
+//    Read_Rx();//[QBS]
 
 	printf( "\nPRESS KEY TO EXIT\n\n" );
 	fgets (wbuf, 31, stdin);//[QBS]
